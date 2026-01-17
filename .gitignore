@@ -1,0 +1,35 @@
+# -------------------------
+# OS / Editor Trash Files
+# -------------------------
+# macOS Finder files
+.DS_Store
+.DS_Store?
+._*
+
+# macOS crash/metadata directories
+.AppleDouble
+.LSOverride
+
+
+
+# -------------------------
+# R build files
+# -------------------------
+man/*
+NAMESPACE
+
+
+# -------------------------
+# R Test that package
+# -------------------------
+R/tests/testthat/_snaps/*
+
+# -------------------------
+# R / RStudio
+# -------------------------
+
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+.Rproj.user/*

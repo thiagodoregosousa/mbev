@@ -1,0 +1,12 @@
+Package: mbev
+Type: Package
+Title: Multimodal Bivariate Extreme Value (MBEV) 
+Version: 0.1
+Date: 2026-01-17
+Authors@R: Authors@R: c(person("Cira Otiniano", "Author", role = "aut",email = "ciragotiniano@gmail.com"),person("Yasmin Lirio", "Author", role = "aut"),person("Thiago Sousa", "Developer", role = "cre",email = "thiagoestatistico@gmail.com"))
+BugReports: https://github.com/thiagopod17/mbev
+Description: Package for simulation and estimation of MBEV distributions.
+License: GPL (>=2)
+Depends: 
+Imports: 
+RoxygenNote: 7.3.3
