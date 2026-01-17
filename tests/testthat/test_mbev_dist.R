@@ -64,7 +64,15 @@ test_that("Edge cases behaviour", {
 })
 
 
+test_that("Dependency behaviour", {
+  
+  # dep very high makes vectors to be closely related
+  xy = rmbev(n = 1000, dep = 10000)
+  expect_equal(cor(xy[,1], xy[,2]), 1, 0.01)
+  
+  # dep close to 1 makes it uncorrelated 
+  xy = rmbev(n = 1000, dep = 1)
+  expect_equal(cor(xy[,1], xy[,2]), 0, 0.05)
 
-
-
+})
 

@@ -1,4 +1,9 @@
+# TODO
 
+- points chat identified as wrong
+- step 3 tests 
+- then move on to next steps, small likelihood to estimate model, start with dep, 
+- then add more parameters as you go. maybe different likelihood functions
 
 #   Describe this project
 

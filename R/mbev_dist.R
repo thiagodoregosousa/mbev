@@ -2,7 +2,7 @@
 #'
 #' @param n sample size
 #' @param (mu1, mu2, delta1, delta2, sigma1, sigma2, x1, x2, dep) mu,delta,sigma,xi are interpreted as the parameters 
-#' of the marginal BGEV and dep is the dependency parameter passed to evd::rbvevd.
+#' of the marginal BGEV and dep is the dependency parameter passed to as 1/dep evd::rbvevd. 
 #' @param D vector of means mu1 and mu2 as in pg 44 of YASMIN_TESE
 #' @param modelo (only "log" implemented and tested) passed to evd::rbvevd. Only tested with `log` (symmetric logistic)
 #'
@@ -10,7 +10,15 @@
 #' as a matrix 
 #'
 #' @details
-#' gumbel bivariada from evd::rbvevd
+#' Uses gumbel bivariada from evd::rbvevd
+#' Parameter support:
+#' \itemize{
+#'   \item \code{n > 1}
+#'   \item \code{delta1 > -1}, \code{delta2 > -1}
+#'   \item \code{sigma1 > 0}, \code{sigma2 > 0}
+#'   \item \code{modelo = "log"} (logistic symmetric EV dependence)
+#'   \item \code{dep >= 1} (dependence parameter)
+#' }
 #' 
 #' @references 
 #' YASMIN_TESE
@@ -27,9 +35,9 @@ rmbev <- function (n = 50,
                    sigma1 = 1,
                    sigma2 = 1,
                    xi1 = 0.5,
-                   xi2 = .5,
-                   modelo = "log",
-                   dep = 1) {
+                   xi2 = 0.5,
+                   dep = 1,
+                   modelo = "log") {
   
   # check input parameters 
   condition = (n > 1) &&
@@ -40,10 +48,10 @@ rmbev <- function (n = 50,
   if(!condition)
     stop("Invalid input parameters")
   
-  
+  # dep is in [1,Inf) but evd::rbvevd uses r in (0,1] so that is why we use 1/dep (see Details of ?dbvevd for the model = "log")
   x <- evd::rbvevd(
     n = n,
-    dep = dep,
+    dep = 1/dep,
     model = modelo,
     mar1 = c(0, sigma1, xi1),
     mar2 = c(0, sigma2, xi2)
