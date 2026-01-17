@@ -1,8 +1,8 @@
 #' Generate random iid bivariate vectors following MBEV distribution
 #'
 #' @param n sample size
-#' @param (mu1, mu2, delta1, delta2, sigma1, sigma2, x1, x2, dep) mu,delta,sigma,xi are interpreted as the parameters 
-#' of the marginal BGEV and dep is the dependency parameter passed to as 1/dep evd::rbvevd. 
+#' @param (mu1, mu2, delta1, delta2, sigma1, sigma2, xi1, xi2, dep) mu,delta,sigma,xi are interpreted as the parameters 
+#' of the marginal BGEV and dep is the dependency parameter passed to evd::rbvevd.
 #' @param D vector of means mu1 and mu2 as in pg 44 of YASMIN_TESE
 #' @param modelo (only "log" implemented and tested) passed to evd::rbvevd. Only tested with `log` (symmetric logistic)
 #'
@@ -44,7 +44,7 @@ rmbev <- function (n = 50,
               delta1 > -1 &&  delta2 > -1 && 
               sigma1 > 0  &&  sigma2 > 0  &&
               modelo == "log" &&
-              dep >= 1 
+              dep > 0 && dep <= 1  
   if(!condition)
     stop("Invalid input parameters")
   
