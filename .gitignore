@@ -20,6 +20,12 @@ NAMESPACE
 
 
 # -------------------------
+# Temporary files
+# -------------------------
+mestrado_yasmin_codigo_artigos
+
+
+# -------------------------
 # R Test that package
 # -------------------------
 R/tests/testthat/_snaps/*
