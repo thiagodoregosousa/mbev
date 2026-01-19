@@ -39,3 +39,4 @@ R/tests/testthat/_snaps/*
 .Ruserdata
 .Rproj.user/
 .Rproj.user/*
+.Rproj
