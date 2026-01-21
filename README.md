@@ -1,13 +1,12 @@
 # TODO
 
-- points chat identified as wrong
-- step 3 tests 
-- then move on to next steps, small likelihood to estimate model, start with dep, 
-- then add more parameters as you go. maybe different likelihood functions
+- (always) GIT PULL
+- why estimation gets bad when delta2 = 9 ? Things to investigate: standard upper bound of bgev package is < 9 for delta. 
+
 
 #   Describe this project
 
-This is my new package for... 
+This is my new package for...
 
 # Good practices on coding and package organization
 

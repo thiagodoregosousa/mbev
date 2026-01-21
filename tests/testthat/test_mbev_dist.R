@@ -17,7 +17,7 @@ test_that("Passing invalid to my function", {
   
   # invalid dep
   expect_error(rmbev(dep = 0))
-  expect_error(rmbev(dep = 0.9999))
+  expect_error(rmbev(dep = 1.0001))
   expect_error(rmbev(dep = -100))
   
 })
@@ -50,10 +50,10 @@ test_that("Edge cases behaviour", {
   expect_silent(rmbev(xi1 = 1e-30))
   
   # Inf values appear when xi is big
-  x1 = rmbev(n = 10, xi1 = 1e30)[,1]
-  expect_gt(sum(x1 == Inf), 1)
-  x2 = rmbev(n = 10, xi2 = 1e30)[,2]
-  expect_gt(sum(x2 == Inf), 1)
+  rnd_obs_1 = rmbev(n = 10, xi1 = 1e30)[,1]
+  expect_gt(sum(rnd_obs_1 == Inf), 1)
+  rnd_obs_2 = rmbev(n = 10, xi2 = 1e30)[,2]
+  expect_gt(sum(rnd_obs_2 == Inf), 1)
   x = rmbev(n = 10, xi1 = 1e30, xi2 = 1e30)
   expect_gt(sum(x[,1] == Inf), 1)
   expect_gt(sum(x[,2] == Inf), 1)
@@ -67,7 +67,7 @@ test_that("Edge cases behaviour", {
 test_that("Dependency behaviour", {
   
   # dep very high makes vectors to be closely related
-  xy = rmbev(n = 1000, dep = 10000)
+  xy = rmbev(n = 1000, dep = 1e-4)
   expect_equal(cor(xy[,1], xy[,2]), 1, 0.01)
   
   # dep close to 1 makes it uncorrelated 

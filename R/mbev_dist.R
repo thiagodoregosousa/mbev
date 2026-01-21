@@ -36,7 +36,7 @@ rmbev <- function (n = 50,
                    sigma2 = 1,
                    xi1 = 0.5,
                    xi2 = 0.5,
-                   dep = 1,
+                   dep = 0.25,
                    modelo = "log") {
   
   # check input parameters 
@@ -51,7 +51,7 @@ rmbev <- function (n = 50,
   # dep is in [1,Inf) but evd::rbvevd uses r in (0,1] so that is why we use 1/dep (see Details of ?dbvevd for the model = "log")
   x <- evd::rbvevd(
     n = n,
-    dep = 1/dep,
+    dep = dep,
     model = modelo,
     mar1 = c(0, sigma1, xi1),
     mar2 = c(0, sigma2, xi2)
