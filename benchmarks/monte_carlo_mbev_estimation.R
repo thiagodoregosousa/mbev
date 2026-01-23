@@ -49,10 +49,41 @@ Generate <- function(condition, fixed_objects) {
   dat
 } 
 Analyse <- function(condition, dat, fixed_objects) {
-  ret = as.vector(mbev_estimation(dat)$par)
+  est = mbev_estimation(dat)
+  if(est$value == 0)
+    return(rep(NA,9))
+  ret = as.vector(est$par)
   names(ret) = c("mu1", "mu2", "delta1", "delta2", "sigma1", "sigma2", "xi1", "xi2", "dep") 
-  ret
+  return(ret)
 }
+
+
+analysis <- function(condition, dat, fixed_objects) {
+  est <- mbev_estimation(dat)
+  
+  # detect degenerate / penalty solution
+ # if (!is.finite(est$value) || est$value <= 0) {
+  #  return(rep(NA_real_, 9))  # one NA per estimand
+  #}
+  
+  c(
+    mu1 = est$par["mu1"],
+    mu2 = est$par["mu2"],
+    delta1 = est$par["delta1"],
+    delta2 = est$par["delta2"],
+    sigma1 = est$par["sigma1"],
+    sigma2 = est$par["sigma2"],
+    xi1 = est$par["xi1"],
+    xi2 = est$par["xi2"],
+    dep = est$par["dep"]
+  )
+}
+
+
+
+
+
+
 Summarise <- function(condition, results, fixed_objects) {
   # assuming your Design object columns match these names)
   true_mu1 <- condition$mu1
@@ -91,9 +122,9 @@ Summarise <- function(condition, results, fixed_objects) {
 }
 
 Design2 = Design[c(6,12,18),]
-Final <- SimDesign::runSimulation(design=Design2, replications=6,
+Final <- SimDesign::runSimulation(design=Design2, replications=10,
                                   generate=Generate, analyse=Analyse, summarise=Summarise,
-                                  seed = 1:nrow(Design2), progress = FALSE, verbose = FALSE)
+                                  progress = FALSE, verbose = FALSE)
 
 t(Final)  # see results
 
@@ -102,7 +133,7 @@ t(Final)  # see results
 saveRDS(
   Final,
   file = paste0(
-    "benchmarks/Final",
+    "benchmarks/MC_delta_9_rep_500_",
     format(Sys.time(), "%Y%m%d_%H%M%S"),
     ".rds"
   )
@@ -112,8 +143,26 @@ saveRDS(
 # does bgev works to estimate mu = 0, sigma = 1, xi = 0, delta = 9
 library(bgev)
 source("benchmarks/bgevmle_new.R")
-x = bgev::rbgev(1000, mu = 0, sigma = 1, xi = 0, delta = 9)
-bgev.mle.new(x, lower = c(-20, 0.001, -20, -0.999), upper = c(20, 10, 20, 20))
-bgev.mle.new(x)
+for(i in 1:10){
+  print("\n\n=====================")
+  x = bgev::rbgev(50, mu = 0, sigma = 1, xi = 0, delta = 9)
+  bgev.mle(x)
+  #bgev.mle.new(x, lower = c(-20, 0.001, -20, -0.999), upper = c(20, 10, 20, 20), verbose = TRUE)
+}
 
+# one run of mbev_estimation
+for(i in 1:10){
+  dat = rmbev(n =50, mu1 = 0, mu2 = 0, delta1 = 0.8, delta2 = 9, sigma1 = 1, sigma2 = 1, xi1 = 0, xi2 = 0, dep = 0.4)
+  est = mbev_estimation(dat)
+  print("=====================")
+  print(est$par)
+  print(est$value)
+}
+
+# bgev estimate of second coordinate of mbev data, handle cases with errors in initial estimates
+for(i in 1:10){
+  print("=====================")
+  dat = rmbev(n = 500, mu1 = 0, mu2 = 0, delta1 = 0.8, delta2 = 9, sigma1 = 1, sigma2 = 1, xi1 = 0, xi2 = 0, dep = 0.4)
+  bgev.mle.new(as.vector(dat[,2]), lower = c(-20, 0.001, -20, -0.999), upper = c(20, 10, 20, 20), verbose = TRUE)
+}
 

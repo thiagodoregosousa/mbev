@@ -1,8 +1,14 @@
 # TODO
 
 - (always) GIT PULL
-- why estimation gets bad when delta2 = 9 ? Things to investigate: standard upper bound of bgev package is < 9 for delta. 
+- high mse for xi9 in mbev estimation, suspect MGEV estimation is bad for these parameters. Stop
+to make this work, maybe already work on bgev package structure and new version modifications. 
+Try not to dig into a whole that creates other takss and problems. 
 
+# Debugging/customization
+
+- recall that first step estimation is done by using bgev.mle which sets custom upper and lower bounds. You can set them
+manually to adjust your search, specially if you see parameters hitting the bounds. 
 
 #   Describe this project
 

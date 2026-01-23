@@ -92,11 +92,10 @@ mbev_estimation = function(Y,
   Y2=Y[,2]
   
   # estimate marginal distribution to get good starting values
-  Y1_estimators <- bgev::bgev.mle(x = as.vector(Y1), deoptim.itermax = 20)$par # returns (mu, sigma, xi, delta)
-  Y2_estimators <- bgev::bgev.mle(x = as.vector(Y2), deoptim.itermax = 20)$par
+  Y1_estimators <- bgev.mle.new(x = as.vector(Y1), deoptim.itermax = 200, lower = c(-20, 0.001, -20, -0.999), upper = c(20, 10, 20, 20))$par # returns (mu, sigma, xi, delta)
+  Y2_estimators <- bgev.mle.new(x = as.vector(Y2), deoptim.itermax = 200, lower = c(-20, 0.001, -20, -0.999), upper = c(20, 10, 20, 20))$par
   mu1 = Y1_estimators[1]; sigma1 = Y1_estimators[2]; xi1 = Y1_estimators[3]; delta1 = Y1_estimators[4]
   mu2 = Y2_estimators[1]; sigma2 = Y2_estimators[2]; xi2 = Y2_estimators[3]; delta2 = Y2_estimators[4]
-  
   
   # use DEOPTIM to get good starting values for dep parameter in (0,1]
   dep_start = DEoptim::DEoptim(fn = function(dep) -mbev_log_likelihood(Y, c(mu1, mu2, delta1, delta2, sigma1, sigma2, xi1, xi2, dep)), 
@@ -112,7 +111,7 @@ mbev_estimation = function(Y,
   
   fn <- function(par) {
     val <- -mbev_log_likelihood(Y, par)
-    if (!is.finite(val)) return(1e99)
+    if (!is.finite(val)) return(return(1e6 + sum(abs(par))))  # instead of 1e99 which makes alg to go to boundary
     val
   }
   

@@ -1,5 +1,5 @@
 bgev.mle.new <- function (x, method_envstats = "mle", deoptim.itermax = 200, 
-          optim.method = "L-BFGS-B", start = NULL, lower = NULL, upper = NULL) 
+          optim.method = "L-BFGS-B", start = NULL, lower = NULL, upper = NULL, verbose = FALSE) 
 {
   likbgev2 = function(theta) {
     val = -likbgev(x, theta)
@@ -10,8 +10,10 @@ bgev.mle.new <- function (x, method_envstats = "mle", deoptim.itermax = 200,
   if (is.null(start)) {
     fit_gev <- try(EnvStats::egevd(x = x, method = method_envstats))
     if (inherits(fit_gev, "try-error")) {
-      message("I tried to get good starting values using egevd and it failed. Try using a different method for method_envstats, e.g, pwme. See the help of egevd for the available options.")
-      return(NULL)
+      if(verbose)
+        message("I tried to get good starting values using egevd and it failed. Try using a different method for method_envstats, e.g, pwme. See the help of egevd for the available options.")
+      fit_gev <- try(EnvStats::egevd(x = x, method = "pwme"))
+      #return(NULL)
     }
     mu_start = fit_gev$parameters[1]
     sd_start = fit_gev$parameters[2]
