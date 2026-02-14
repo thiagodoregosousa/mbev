@@ -1,18 +1,5 @@
-
-
-
 source("R/mbev_dist.R")
 source("R/mbev_estimation.R")
-
-
-
-
-
-
-
-
-
-
 
 
 # create design
@@ -20,15 +7,15 @@ library(tibble)
 library(dplyr)
 theta_tbl <- tibble(
   theta_id = paste0("Theta", 1:6),
-  dep  = c(1,   1,   1/2,   1,   1,   1/2.5),
   mu1    = c(0,   0,   0,   0,   0,   0),
-  sigma1 = c(1,   1,   1,   1,   1,   1),
-  xi1    = c(0.5, 0.5, 1,  -1,  0.5, 0),
-  delta1 = c(0,   0,   0,   1,   1,   0.8),
   mu2    = c(0,   0,   0,   0,   0,   0),
+  delta1 = c(0,   0,   0,   1,   1,   0.8),
+  delta2 = c(0,   1,   1,   2,   1,   2),
+  sigma1 = c(1,   1,   1,   1,   1,   1),
   sigma2 = c(1,   1,   1,   1,   1,   1),
+  xi1    = c(0.5, 0.5, 1,  -1,  0.5, 0),
   xi2    = c(0.5, 0.5, 0,  -1,  0.5, 0),
-  delta2 = c(0,   1,   1,   2,   1,   9)
+  dep  = c(1,   1,   1/2,   1,   1,   1/2.5)
 )
 n_vals <- c(50, 100, 500)
 Design <- tidyr::crossing(
@@ -36,9 +23,7 @@ Design <- tidyr::crossing(
   theta_tbl
 ) %>%
   select(
-    n, dep,
-    mu1, sigma1, xi1, delta1,
-    mu2, sigma2, xi2, delta2
+    n, mu1, mu2, delta1, delta2, sigma1, sigma2, xi1, xi2, dep
   )
 
 
@@ -47,41 +32,26 @@ Design <- tidyr::crossing(
 Generate <- function(condition, fixed_objects) {
   dat <- with(condition, rmbev(n = n, mu1 = mu1, mu2 = mu2, delta1 = delta1, delta2 = delta2, sigma1 = sigma1, sigma2 = sigma2, xi1 = xi1, xi2 = xi2, dep = dep)  )
   dat
-} 
+}
+
+
 Analyse <- function(condition, dat, fixed_objects) {
-  est = mbev_estimation(dat)
-  if(est$value == 0)
-    return(rep(NA,9))
-  ret = as.vector(est$par)
-  names(ret) = c("mu1", "mu2", "delta1", "delta2", "sigma1", "sigma2", "xi1", "xi2", "dep") 
-  return(ret)
-}
-
-
-analysis <- function(condition, dat, fixed_objects) {
-  est <- mbev_estimation(dat)
   
-  # detect degenerate / penalty solution
- # if (!is.finite(est$value) || est$value <= 0) {
-  #  return(rep(NA_real_, 9))  # one NA per estimand
-  #}
-  
-  c(
-    mu1 = est$par["mu1"],
-    mu2 = est$par["mu2"],
-    delta1 = est$par["delta1"],
-    delta2 = est$par["delta2"],
-    sigma1 = est$par["sigma1"],
-    sigma2 = est$par["sigma2"],
-    xi1 = est$par["xi1"],
-    xi2 = est$par["xi2"],
-    dep = est$par["dep"]
-  )
+  par_names = c("mu1", "mu2", "delta1", "delta2", "sigma1", "sigma2", "xi1", "xi2", "dep") 
+  ret_error <- rep(NA_real_, 9)
+  names(ret_error) <- par_names
+  est <- tryCatch(mbev_estimation(dat), error = function(e) NULL)
+  if(is.null(est))
+    return(ret_error)
+  if (is.null(est$optim$bestmem) ||
+      length(est$optim$bestmem) != 9 ||
+      any(!is.finite(est$optim$bestmem))) {
+    return(ret_error)
+  }
+  ret_success <- as.numeric(est$optim$bestmem)
+  names(ret_success) <- par_names
+  return(ret_success)
 }
-
-
-
-
 
 
 Summarise <- function(condition, results, fixed_objects) {
@@ -121,48 +91,40 @@ Summarise <- function(condition, results, fixed_objects) {
   return(ret)
 }
 
-Design2 = Design[c(6,12,18),]
-Final <- SimDesign::runSimulation(design=Design2, replications=10,
+Design2 = Design #[c(6,12,18),]
+Final <- SimDesign::runSimulation(design=Design2, replications=5,
                                   generate=Generate, analyse=Analyse, summarise=Summarise,
-                                  progress = FALSE, verbose = FALSE)
-
-t(Final)  # see results
+                                  progress = FALSE, verbose = FALSE, store_results = TRUE, 
+                                  parallel = TRUE, ncores = 7, save_results = TRUE)
 
 
 # SAVE RESULTS
 saveRDS(
   Final,
   file = paste0(
-    "benchmarks/MC_delta_9_rep_500_",
+    "benchmarks/itermax_500_100_DEoptim_replicates_10",
     format(Sys.time(), "%Y%m%d_%H%M%S"),
     ".rds"
   )
 )
 
 
-# does bgev works to estimate mu = 0, sigma = 1, xi = 0, delta = 9
-library(bgev)
-source("benchmarks/bgevmle_new.R")
-for(i in 1:10){
-  print("\n\n=====================")
-  x = bgev::rbgev(50, mu = 0, sigma = 1, xi = 0, delta = 9)
-  bgev.mle(x)
-  #bgev.mle.new(x, lower = c(-20, 0.001, -20, -0.999), upper = c(20, 10, 20, 20), verbose = TRUE)
-}
 
-# one run of mbev_estimation
-for(i in 1:10){
-  dat = rmbev(n =50, mu1 = 0, mu2 = 0, delta1 = 0.8, delta2 = 9, sigma1 = 1, sigma2 = 1, xi1 = 0, xi2 = 0, dep = 0.4)
-  est = mbev_estimation(dat)
-  print("=====================")
-  print(est$par)
-  print(est$value)
-}
 
-# bgev estimate of second coordinate of mbev data, handle cases with errors in initial estimates
-for(i in 1:10){
-  print("=====================")
-  dat = rmbev(n = 500, mu1 = 0, mu2 = 0, delta1 = 0.8, delta2 = 9, sigma1 = 1, sigma2 = 1, xi1 = 0, xi2 = 0, dep = 0.4)
-  bgev.mle.new(as.vector(dat[,2]), lower = c(-20, 0.001, -20, -0.999), upper = c(20, 10, 20, 20), verbose = TRUE)
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
