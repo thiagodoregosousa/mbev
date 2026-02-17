@@ -40,7 +40,10 @@ Analyse <- function(condition, dat, fixed_objects) {
   par_names = c("mu1", "mu2", "delta1", "delta2", "sigma1", "sigma2", "xi1", "xi2", "dep") 
   ret_error <- rep(NA_real_, 9)
   names(ret_error) <- par_names
-  est <- tryCatch(mbev_estimation(dat), error = function(e) NULL)
+  est <- tryCatch(mbev_estimation(dat, 
+                                  control_DEoptim_step1 = DEoptim::DEoptim.control(itermax = 100, NP = 100, trace = FALSE),
+                                  control_DEoptim_step2 = DEoptim::DEoptim.control(itermax = 50, NP = 100, trace = FALSE),
+                                  control_DEoptim_step3 = DEoptim::DEoptim.control(itermax = 500, NP = 100, trace = FALSE)), error = function(e) NULL)
   if(is.null(est))
     return(ret_error)
   if (is.null(est$optim$bestmem) ||
@@ -55,7 +58,7 @@ Analyse <- function(condition, dat, fixed_objects) {
 
 
 Summarise <- function(condition, results, fixed_objects) {
-  # assuming your Design object columns match these names)
+  
   true_mu1 <- condition$mu1
   true_mu2 <- condition$mu2
   true_delta1 <- condition$delta1
@@ -66,54 +69,104 @@ Summarise <- function(condition, results, fixed_objects) {
   true_xi2 <- condition$xi2
   true_dep <- condition$dep
   
-  # Return a named vector of the summary statistics (bias and RMSE)
   ret <- c(
-    bias_mu1 = bias(results[, "mu1"], parameter = true_mu1),
-    bias_mu2 = bias(results[, "mu2"], parameter = true_mu2),
-    bias_delta1 = bias(results[, "delta1"], parameter = true_delta1),
-    bias_delta2 = bias(results[, "delta2"], parameter = true_delta2),
-    bias_sigma1 = bias(results[, "sigma1"], parameter = true_sigma1),
-    bias_sigma2 = bias(results[, "sigma2"], parameter = true_sigma2),  
-    bias_xi1 = bias(results[, "xi1"], parameter = true_xi1),
-    bias_xi2 = bias(results[, "xi2"], parameter = true_xi2),
-    bias_dep = bias(results[, "dep"], parameter = true_dep),
-    RMSE_mu1 = RMSE(results[, "mu1"], parameter = true_mu1),
-    RMSE_mu2 = RMSE(results[, "mu2"], parameter = true_mu2),
-    RMSE_delta1 = RMSE(results[, "delta1"], parameter = true_delta1),
-    RMSE_delta2 = RMSE(results[, "delta2"], parameter = true_delta2),
-    RMSE_sigma1 = RMSE(results[, "sigma1"], parameter = true_sigma1),
-    RMSE_sigma2 = RMSE(results[, "sigma2"], parameter = true_sigma2),  
-    RMSE_xi1 = RMSE(results[, "xi1"], parameter = true_xi1),
-    RMSE_xi2 = RMSE(results[, "xi2"], parameter = true_xi2),
-    RMSE_dep = RMSE(results[, "dep"], parameter = true_dep) 
+    
+    # Bias
+    bias_mu1 = mean(results[, "mu1"]) - true_mu1,
+    bias_mu2 = mean(results[, "mu2"]) - true_mu2,
+    bias_delta1 = mean(results[, "delta1"]) - true_delta1,
+    bias_delta2 = mean(results[, "delta2"]) - true_delta2,
+    bias_sigma1 = mean(results[, "sigma1"]) - true_sigma1,
+    bias_sigma2 = mean(results[, "sigma2"]) - true_sigma2,
+    bias_xi1 = mean(results[, "xi1"]) - true_xi1,
+    bias_xi2 = mean(results[, "xi2"]) - true_xi2,
+    bias_dep = mean(results[, "dep"]) - true_dep,
+    
+    # Empirical SE (what referee wants)
+    SE_mu1 = sd(results[, "mu1"]),
+    SE_mu2 = sd(results[, "mu2"]),
+    SE_delta1 = sd(results[, "delta1"]),
+    SE_delta2 = sd(results[, "delta2"]),
+    SE_sigma1 = sd(results[, "sigma1"]),
+    SE_sigma2 = sd(results[, "sigma2"]),
+    SE_xi1 = sd(results[, "xi1"]),
+    SE_xi2 = sd(results[, "xi2"]),
+    SE_dep = sd(results[, "dep"]),
+    
+    # RMSE
+    RMSE_mu1 = sqrt(mean((results[, "mu1"] - true_mu1)^2)),
+    RMSE_mu2 = sqrt(mean((results[, "mu2"] - true_mu2)^2)),
+    RMSE_delta1 = sqrt(mean((results[, "delta1"] - true_delta1)^2)),
+    RMSE_delta2 = sqrt(mean((results[, "delta2"] - true_delta2)^2)),
+    RMSE_sigma1 = sqrt(mean((results[, "sigma1"] - true_sigma1)^2)),
+    RMSE_sigma2 = sqrt(mean((results[, "sigma2"] - true_sigma2)^2)),
+    RMSE_xi1 = sqrt(mean((results[, "xi1"] - true_xi1)^2)),
+    RMSE_xi2 = sqrt(mean((results[, "xi2"] - true_xi2)^2)),
+    RMSE_dep = sqrt(mean((results[, "dep"] - true_dep)^2))
   )
   
   return(ret)
 }
 
-Design2 = Design #[c(6,12,18),]
-Final <- SimDesign::runSimulation(design=Design2, replications=5,
-                                  generate=Generate, analyse=Analyse, summarise=Summarise,
-                                  progress = FALSE, verbose = FALSE, store_results = TRUE, 
-                                  parallel = TRUE, ncores = 7, save_results = TRUE)
 
 
-# SAVE RESULTS
-saveRDS(
-  Final,
-  file = paste0(
-    "benchmarks/itermax_500_100_DEoptim_replicates_10",
-    format(Sys.time(), "%Y%m%d_%H%M%S"),
+run_monte_carlo_mbev <- function(lines_to_use,
+                                 person,
+                                 ncores = 7) {
+  
+  # ---- Worker map ----
+  worker_map <- c(
+    thiago = 1,
+    yasmin = 2,
+    cira   = 3,
+    raul   = 4
+  )
+  
+  if (!person %in% names(worker_map))
+    stop("Unknown person name.")
+  
+  worker_id <- worker_map[[person]]
+  
+  # ---- Seed structure ----
+  seed <- lines_to_use +
+    1000  * worker_id
+  
+  # ---- Run simulation ----
+  Final <- SimDesign::runSimulation(
+    design        = Design[lines_to_use, ],
+    replications  = 500,
+    generate      = Generate,
+    analyse       = Analyse,
+    summarise     = Summarise,
+    progress      = TRUE,
+    verbose       = TRUE,
+    store_results = TRUE,
+    parallel      = TRUE,
+    ncores        = ncores,
+    save_results  = TRUE,
+    seed          = seed,
+    save_details = list(save_results_dirname = paste0(
+      "mc_lines_",
+      paste(lines_to_use, collapse = "_"),
+      "_",
+      person))
+  )
+  
+  # ---- Save file ----
+  filename <- paste0(
+    "benchmarks/mc_lines_",
+    paste(lines_to_use, collapse = "_"),
+    "_",
+    person,
     ".rds"
   )
-)
-
-
-
-
-
-
-
+  
+  saveRDS(Final, file = filename)
+  
+  print(paste("Finished:", filename))
+  
+  invisible(Final)
+}
 
 
 

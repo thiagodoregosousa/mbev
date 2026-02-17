@@ -1,0 +1,10 @@
+rm(list = ls(all.names = TRUE))
+source("benchmarks/monte_carlo_mbev_estimation.R")
+# dones: lines 1-7
+run_monte_carlo_mbev(lines_to_use = 8, person = "thiago", ncores = 7)
+Sys.sleep(10)
+run_monte_carlo_mbev(lines_to_use = 9, person = "thiago", ncores = 7)
+Sys.sleep(10)
+run_monte_carlo_mbev(lines_to_use = 10, person = "thiago", ncores = 7)
+Sys.sleep(10)
+run_monte_carlo_mbev(lines_to_use = 11, person = "thiago", ncores = 7)
