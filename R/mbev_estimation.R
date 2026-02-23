@@ -121,7 +121,7 @@ mbev_valid_pars = function(pars){
 #' 
 #' @export
 mbev_estimation <- function (Y, lower = c(-5,-5, -0.99, -0.99, 0.01, 0.01, -5, -5, 0.01), 
-                                 upper = c( 5, 5, 5,    5,    5,   5,   5,   5, 0.99),
+                                 upper = c( 5, 5, 5,    5,    5,   5,   5,   5, 1),
                                  control_DEoptim_step1 = DEoptim::DEoptim.control(itermax = 100, NP = 100, trace = FALSE),
                                  control_DEoptim_step2 = DEoptim::DEoptim.control(itermax = 50, NP = 100, trace = FALSE),
                                  control_DEoptim_step3 = DEoptim::DEoptim.control(itermax = 500, NP = 100, trace = FALSE),
@@ -155,7 +155,7 @@ mbev_estimation <- function (Y, lower = c(-5,-5, -0.99, -0.99, 0.01, 0.01, -5, -
                                                                             Y1_est[2], Y2_est[2],
                                                                             Y1_est[3], Y2_est[3],
                                                                             dep)), 
-                               lower = 0.001, upper = 1, control = control_DEoptim_step2)$optim$bestmem
+                               lower = 0.01, upper = 1, control = control_DEoptim_step2)$optim$bestmem
   if(trace)
     print(paste("dep_start", dep_start))
   
